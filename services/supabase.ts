@@ -4,12 +4,24 @@ export class SupabaseService {
   private key: string;
 
   constructor() {
-    this.url = localStorage.getItem('sb_url') || 'http://localhost:54321';
-    this.key = localStorage.getItem('sb_key') || 'sb_secret_N7UND0UgjKTVK-Uodkm0Hg_xSvEMPvz';
-    
-    if (!localStorage.getItem('sb_url')) {
-      localStorage.setItem('sb_url', this.url);
-      localStorage.setItem('sb_key', this.key);
+    // Hardcoded project credentials provided by user
+    const PROJECT_URL = 'https://dbppxzkkgdtnmikkviyt.supabase.co';
+    // Using the publishable key as requested to avoid the "Forbidden use of secret API key in browser" error
+    const PROJECT_KEY = 'sb_publishable_EK1SAhvQC5RvjagfJR7NLA_TaqRCpnx';
+
+    // Prioritize localStorage if the user has manually overridden them, 
+    // but check if the stored key is the old secret one that caused errors.
+    const storedUrl = localStorage.getItem('sb_url');
+    const storedKey = localStorage.getItem('sb_key');
+
+    if (!storedUrl || !storedKey || storedKey.startsWith('sb_secret_') || storedUrl.includes('localhost')) {
+      localStorage.setItem('sb_url', PROJECT_URL);
+      localStorage.setItem('sb_key', PROJECT_KEY);
+      this.url = PROJECT_URL;
+      this.key = PROJECT_KEY;
+    } else {
+      this.url = storedUrl;
+      this.key = storedKey;
     }
   }
 
@@ -55,7 +67,7 @@ export class SupabaseService {
   }
 
   async saveEnrichment(data: any) {
-    // Upsert using lead_id as reference (requires unique constraint or manual check)
+    // Upsert using lead_id as reference (requires unique constraint on lead_id in DB)
     return this.request('lead_enrichment', {
       method: 'POST',
       headers: { 'Prefer': 'resolution=merge-duplicates' },
